@@ -1,0 +1,152 @@
+There are 3 roles each role defines queries and mutations you can send
+
+(DEFAULT) "Unauthorized" can userCreate() and generateToken()
+"Admin" can do anything
+"FruitJohn" can do anything in the list of fruits,while vegetables can only display a list and add new ones
+"VegetarianMary" can do anything in the list of vegetables ,while fruits can only display the list and add new ones
+
+To specify user role
+ * generateToken(username: String, password: String): String query
+ * push token to header 'authorization':'Bearer ${tokenValue}'
+
+!!! Queries & mutations throws FORBIDDEN(403) error when no token with rights provided
+
+
+Queries:
+
+    fruitById(fruitId: ID): Fruit
+    takes: fruitId:ID
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: Fruit if fruit with such id exists | null otherwise
+    available: for roles: ["Admin", "FruitJohn"]
+
+    fruits:[Fruit]
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: Fruit[]
+    available: for roles: ["Admin", "FruitJohn", "VegetarianMary"]
+
+
+    vegetableById(vegetableId: ID): Vegetable
+    takes: vegetableId:ID
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: Vegetable if vegetable with such id exists | null otherwise
+    available: for roles: ["Admin", "VegetarianMary"]
+
+    vegetables:[Vegetable]
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: Vegetable[]
+    available: for roles: ["Admin", "FruitJohn", "VegetarianMary"]
+
+
+    users: [User]
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: User[]
+    available: for roles: ["Admin"]
+
+    generateToken(username: String, password: String): String
+    takes: username:String, password: String
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: token: String
+    throws: error("User not found") -- if incorrect username || error("Incorrect password") -- if incorrect password
+    available: for roles: ["Admin", "FruitJohn", "VegetarianMary", "Unauthorized"]
+
+Mutations:
+
+    createFruit(fruitType: FruitTypeCreate!): Fruit
+    takes: FruitTypeCreate(required)
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: created object typeof Fruit
+    available: for roles: ["Admin", "FruitJohn"]
+
+    editFruit(fruitType: FruitTypeEdit!): Fruit
+    takes: FruitTypeEdit(required)
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: updated object typeof Fruit
+    available: for roles: ["Admin", "FruitJohn"]
+
+    removeFruit(fruitId: ID!): SuccessResult
+    takes: fruitId:ID(required)
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: result of deletion: SuccessResult
+    available: for roles: ["Admin", "FruitJohn"]
+
+
+    createVegetable(vegetableType: VegetableCreateType!): Vegetable
+    takes: VegetableCreateType(required)
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: created object typeof Vegetable
+    available: for roles: ["Admin", "VegetarianMary"]
+
+
+    editVegetable(vegetableType: VegetableEditType!): Vegetable
+    takes: VegetableEditType(required)
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: updated object typeof Vegetable
+    available: for roles: ["Admin", "VegetarianMary"]
+
+    removeVegetable(vegetableId: ID!): SuccessResult
+    takes: vegetableId:ID(required)
+    headers: !'authorization':'Bearer ${tokenValue}'
+    returns: result of deletion: SuccessResult
+    available: for roles: ["Admin", "VegetarianMary"]
+
+    userCreate(user: UserCreateType!): User
+    takes: UserCreateType(required)
+    returns: created object typeof User
+    available: for roles: ["Admin", "VegetarianMary", "FruitJohn", "Unauthorized"]
+
+Types
+
+Vegetable {
+    id: ID
+    name: String!
+    price: Float!
+}
+
+Fruit {
+    id: ID!,
+    name: String!
+    price: Float!
+}
+
+User {
+    id: String
+    password: String
+    username: String
+    email: String
+    role: String
+}
+
+UserCreateType {
+    username: String!
+    password: String!
+    email: String
+    role: String!
+}
+
+VegetableCreateType {
+    name: String!
+    price: Float!
+}
+
+VegetableEditType {
+    id: ID!
+    name: String!
+    price: Float!
+}
+
+FruitTypeCreate {
+    name: String!
+    price: Float!
+}
+
+FruitTypeEdit {
+    id: ID!
+    name: String
+    price: Float
+}
+
+SuccessResult {
+    message: String
+    code: Int
+}
